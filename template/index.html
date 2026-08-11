@@ -22,7 +22,7 @@
             </div>
         </header>
 
-        <div class="main-content">
+        <form class="main-content" method="POST" action="/">
             <!-- Sidebar -->
             <aside class="sidebar">
                 <div class="panel config-panel">
@@ -31,9 +31,9 @@
                             <div><span class="icon">A</span> FONT CONFIG</div>
                         </div>
                         <div class="btn-grid">
-                            <button class="config-btn active">Standard</button>
-                            <button class="config-btn">Shadow</button>
-                            <button class="config-btn">ThinkerToy</button>
+                            <button type="submit" name="banner" value="standard" class="config-btn active">Standard</button>
+                            <button type="submit" name="banner" value="shadow" class="config-btn">Shadow</button>
+                            <button type="submit" name="banner" value="thinkertoy" class="config-btn">ThinkerToy</button>
                         </div>
                     </div>
 
@@ -66,7 +66,7 @@
             <!-- Main Input/Output Area -->
             <main class="workspace">
                 <div class="input-panel panel">
-                    <textarea class="message-input" placeholder="Type message to convert..." rows="2"></textarea>
+                    <textarea name="text" class="message-input" placeholder="Type message to convert..." rows="2"></textarea>
                 </div>
 
                 <div class="output-panel panel">
@@ -86,7 +86,7 @@
                     </div>
                 </div>
             </main>
-        </div>
+        </form>
 
         <!-- Footer -->
         <footer class="app-footer">
