@@ -3,16 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASCII-ART</title>
+    <title>ASCII ART</title>
     <link rel="stylesheet" href="index.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="top-nav">
+            <div class="nav-left">
+                <div class="logo">ASCII-ART</div>
+            </div>
+            <div class="nav-right">
+                <i class="far fa-question-circle icon-btn" aria-label="Help"></i>
+            </div>
+        </header>
 
-    work in progress...
-    <br>
-    Chijioke Joseph (cj) is <b>BLOODY</b> <span>GAY</span>
-    <br>
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQW3_WYeOOY6ZciWaKo3L6r5-XIrWLD3kglww&s" alt="">
-    
+        <div class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="panel config-panel">
+                    <div class="panel-section">
+                        <div class="section-title">
+                            <div><span class="icon">A</span> FONT CONFIG</div>
+                        </div>
+                        <div class="btn-grid">
+                            <button class="config-btn active">Standard</button>
+                            <button class="config-btn">Shadow</button>
+                            <button class="config-btn">ThinkerToy</button>
+                        </div>
+                    </div>
+
+                    <div class="panel-section">
+                        <div class="section-title">
+                            <div><i class="fas fa-arrows-alt-h" style="margin-right: 5px;"></i> WIDTH</div>
+                            <span class="value">120CH</span>
+                        </div>
+                        <div class="range-container">
+                            <input type="range" min="40" max="180" value="120" class="custom-range" id="widthRange">
+                            <div class="range-labels">
+                                <span>40</span>
+                                <span>180</span>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="action-buttons">
+                        <button class="action-btn primary">
+                            <i class="far fa-copy"></i> COPY TO CLIPBOARD
+                        </button>
+                        <button class="action-btn secondary">
+                            <i class="fas fa-download"></i> DOWNLOAD .TXT
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Input/Output Area -->
+            <main class="workspace">
+                <div class="input-panel panel">
+                    <textarea class="message-input" placeholder="Type message to convert..." rows="2"></textarea>
+                </div>
+
+                <div class="output-panel panel">
+                    <div class="output-header">
+                        <div class="window-controls">
+                            <span class="dot close"></span>
+                            <span class="dot min"></span>
+                            <span class="dot max"></span>
+                        </div>
+                        <span class="title">OUTPUT STREAM</span>
+                    </div>
+                    <div class="ascii-output">
+                        {{.}}
+                    </div>
+                    <div class="fullscreen-btn">
+                        <i class="fas fa-expand"></i>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-left">
+                <div class="footer-logo">ASCII.ME CORE</div>
+                <div class="copyright">© 2024 ASCII.ME CORE - SYSTEM REV 8.0</div>
+            </div>
+            <nav class="footer-links">
+                <a href="#">SOURCE</a>
+                <a href="#">API</a>
+                <a href="#">LICENSE</a>
+                <a href="#">SUPPORT</a>
+            </nav>
+        </footer>
+    </div>
 </body>
 </html>
+
