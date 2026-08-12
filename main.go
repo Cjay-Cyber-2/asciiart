@@ -2,11 +2,24 @@ package handler
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 	"strings"
-	"text/template"
 )
+
+var allowedBanners = map[string]bool{
+	"standard":   true,
+	"shadow":     true,
+	"thinkertoy": true,
+}
+
+type pageData struct {
+	Result string
+	Text   string
+	Banner string
+	Error  string
+}
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/index.css" {
@@ -25,57 +38,104 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data := pageData{Banner: "standard"}
+
 	if r.Method == http.MethodPost {
-		r.ParseForm()
+		if err := r.ParseForm(); err != nil {
+			data.Error = "Invalid form data."
+			w.WriteHeader(http.StatusBadRequest)
+			tmpl.Execute(w, data)
+			return
+		}
+
 		text := r.FormValue("text")
 		banner := r.FormValue("banner")
 		if banner == "" {
 			banner = "standard"
 		}
-		result, err := ascii(text, banner)
-		if err != nil {
-			http.Error(w, "500 internal server error", http.StatusInternalServerError)
+		data.Text = text
+		data.Banner = banner
+
+		if !allowedBanners[banner] {
+			data.Error = "Unknown banner. Choose standard, shadow, or thinkertoy."
+			w.WriteHeader(http.StatusBadRequest)
+			tmpl.Execute(w, data)
 			return
 		}
+
+		if strings.TrimSpace(text) == "" {
+			data.Error = "Please enter some text to convert."
+			w.WriteHeader(http.StatusBadRequest)
+			tmpl.Execute(w, data)
+			return
+		}
+
+		result, err := ascii(text, banner)
+		if err != nil {
+			data.Error = err.Error()
+			w.WriteHeader(http.StatusBadRequest)
+			tmpl.Execute(w, data)
+			return
+		}
+
+		data.Result = result
 		w.WriteHeader(http.StatusOK)
-		tmpl.Execute(w, result)
+		tmpl.Execute(w, data)
+		return
+	}
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	tmpl.Execute(w, nil)
+	tmpl.Execute(w, data)
 }
 
 func ascii(input, banner string) (string, error) {
-	filename := "banners/" + banner + ".txt"
-	content, err := os.ReadFile(filename)
-	if err != nil {
-		return "", err
+	if !allowedBanners[banner] {
+		return "", fmt.Errorf("unknown banner")
 	}
 
-	words := strings.Split(string(content), "\n")
-	lines := strings.Split(input, "\\n")
+	content, err := os.ReadFile("banners/" + banner + ".txt")
+	if err != nil {
+		return "", fmt.Errorf("could not load banner file")
+	}
+
+	normalized := strings.ReplaceAll(string(content), "\r\n", "\n")
+	normalized = strings.ReplaceAll(normalized, "\r", "\n")
+	words := strings.Split(normalized, "\n")
+
+	input = strings.ReplaceAll(input, "\r\n", "\n")
+	input = strings.ReplaceAll(input, "\r", "\n")
+	input = strings.ReplaceAll(input, "\\n", "\n")
+	lines := strings.Split(input, "\n")
 
 	var result strings.Builder
 
-	for _, char := range lines {
-		if char == "" {
+	for _, line := range lines {
+		if line == "" {
 			result.WriteString("\n")
 			continue
 		}
-		for row := 0; row < 9; row++ {
-			for _, c := range char {
+
+		for row := 0; row < 8; row++ {
+			for _, c := range line {
 				code := int(c)
-				if code >= 32 && code <= 126 {
-					index := (code - 32) * 9 + 1
-					result.WriteString(words[index+row])
+				if code < 32 || code > 126 {
+					return "", fmt.Errorf("input contains unsupported characters (use printable ASCII only)")
 				}
+				index := (code-32)*9 + 1 + row
+				if index < 0 || index >= len(words) {
+					return "", fmt.Errorf("banner file is invalid")
+				}
+				result.WriteString(words[index])
 			}
-			if row < 8 {
-				result.WriteString("\n")
-			}
+			result.WriteString("\n")
 		}
 	}
+
 	return result.String(), nil
 }
 

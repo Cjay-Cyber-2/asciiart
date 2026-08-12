@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ASCII ART</title>
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="/index.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,35 +12,34 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Header -->
         <header class="top-nav">
             <div class="nav-left">
                 <div class="logo">ASCII-ART</div>
             </div>
             <div class="nav-right">
-                <i class="far fa-question-circle icon-btn" aria-label="Help"></i>
+                <i class="far fa-question-circle icon-btn" aria-label="Help" title="Type text, pick a font, then Generate. Use Enter or \n for new lines."></i>
             </div>
         </header>
 
-        <form class="main-content" method="POST" action="/">
-            <!-- Sidebar -->
+        <form class="main-content" method="POST" action="/" id="asciiForm">
             <aside class="sidebar">
                 <div class="panel config-panel">
                     <div class="panel-section">
                         <div class="section-title">
                             <div><span class="icon">A</span> FONT CONFIG</div>
                         </div>
+                        <input type="hidden" name="banner" id="bannerInput" value="{{if .Banner}}{{.Banner}}{{else}}standard{{end}}">
                         <div class="btn-grid">
-                            <button type="submit" name="banner" value="standard" class="config-btn active">Standard</button>
-                            <button type="submit" name="banner" value="shadow" class="config-btn">Shadow</button>
-                            <button type="submit" name="banner" value="thinkertoy" class="config-btn">ThinkerToy</button>
+                            <button type="button" class="config-btn{{if or (eq .Banner "standard") (eq .Banner "")}} active{{end}}" data-banner="standard">Standard</button>
+                            <button type="button" class="config-btn{{if eq .Banner "shadow"}} active{{end}}" data-banner="shadow">Shadow</button>
+                            <button type="button" class="config-btn{{if eq .Banner "thinkertoy"}} active{{end}}" data-banner="thinkertoy">ThinkerToy</button>
                         </div>
                     </div>
 
                     <div class="panel-section">
                         <div class="section-title">
                             <div><i class="fas fa-arrows-alt-h" style="margin-right: 5px;"></i> WIDTH</div>
-                            <span class="value">120CH</span>
+                            <span class="value" id="widthValue">120CH</span>
                         </div>
                         <div class="range-container">
                             <input type="range" min="40" max="180" value="120" class="custom-range" id="widthRange">
@@ -51,23 +50,28 @@
                         </div>
                     </div>
 
-
                     <div class="action-buttons">
-                        <button class="action-btn primary">
+                        <button type="submit" class="action-btn primary">
+                            <i class="fas fa-play"></i> GENERATE
+                        </button>
+                        <button type="button" class="action-btn secondary" id="copyBtn">
                             <i class="far fa-copy"></i> COPY TO CLIPBOARD
                         </button>
-                        <button class="action-btn secondary">
+                        <button type="button" class="action-btn secondary" id="downloadBtn">
                             <i class="fas fa-download"></i> DOWNLOAD .TXT
                         </button>
                     </div>
                 </div>
             </aside>
 
-            <!-- Main Input/Output Area -->
             <main class="workspace">
                 <div class="input-panel panel">
-                    <textarea name="text" class="message-input" placeholder="Type message to convert..." rows="2"></textarea>
+                    <textarea name="text" id="textInput" class="message-input" placeholder="Type message to convert..." rows="3">{{.Text}}</textarea>
                 </div>
+
+                {{if .Error}}
+                <div class="error-banner">{{.Error}}</div>
+                {{end}}
 
                 <div class="output-panel panel">
                     <div class="output-header">
@@ -78,30 +82,94 @@
                         </div>
                         <span class="title">OUTPUT STREAM</span>
                     </div>
-                    <div class="ascii-output">
-                        {{.}}
-                    </div>
-                    <div class="fullscreen-btn">
+                    <pre class="ascii-output" id="asciiOutput">{{.Result}}</pre>
+                    <div class="fullscreen-btn" id="fullscreenBtn" title="Toggle fullscreen">
                         <i class="fas fa-expand"></i>
                     </div>
                 </div>
             </main>
         </form>
 
-        <!-- Footer -->
         <footer class="app-footer">
             <div class="footer-left">
                 <div class="footer-logo">ASCII.ME CORE</div>
                 <div class="copyright">© 2024 ASCII.ME CORE - SYSTEM REV 8.0</div>
             </div>
             <nav class="footer-links">
-                <a href="#">SOURCE</a>
+                <a href="https://github.com/Cjay-Cyber-2/asciiart">SOURCE</a>
                 <a href="#">API</a>
                 <a href="#">LICENSE</a>
                 <a href="#">SUPPORT</a>
             </nav>
         </footer>
     </div>
+
+    <script>
+        (function () {
+            const bannerInput = document.getElementById('bannerInput');
+            const configButtons = document.querySelectorAll('.config-btn[data-banner]');
+            const widthRange = document.getElementById('widthRange');
+            const widthValue = document.getElementById('widthValue');
+            const asciiOutput = document.getElementById('asciiOutput');
+            const copyBtn = document.getElementById('copyBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            const outputPanel = document.querySelector('.output-panel');
+
+            configButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    configButtons.forEach(function (b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    bannerInput.value = btn.getAttribute('data-banner');
+                });
+            });
+
+            function applyWidth(ch) {
+                widthValue.textContent = ch + 'CH';
+                asciiOutput.style.maxWidth = ch + 'ch';
+                const pct = ((ch - 40) / (180 - 40)) * 100;
+                widthRange.style.background = 'linear-gradient(to right, var(--neon-green) ' + pct + '%, var(--border-dim) ' + pct + '%)';
+            }
+
+            applyWidth(Number(widthRange.value));
+            widthRange.addEventListener('input', function () {
+                applyWidth(Number(widthRange.value));
+            });
+
+            copyBtn.addEventListener('click', async function () {
+                const text = asciiOutput.textContent || '';
+                if (!text.trim()) return;
+                try {
+                    await navigator.clipboard.writeText(text);
+                    copyBtn.textContent = 'COPIED';
+                    setTimeout(function () {
+                        copyBtn.innerHTML = '<i class="far fa-copy"></i> COPY TO CLIPBOARD';
+                    }, 1200);
+                } catch (e) {
+                    copyBtn.textContent = 'COPY FAILED';
+                }
+            });
+
+            downloadBtn.addEventListener('click', function () {
+                const text = asciiOutput.textContent || '';
+                if (!text.trim()) return;
+                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ascii-art.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            fullscreenBtn.addEventListener('click', function () {
+                if (!document.fullscreenElement) {
+                    outputPanel.requestFullscreen().catch(function () {});
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
-
